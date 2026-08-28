@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Свадебный квиз — Виктория & Антон 💍</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%);
+    min-height: 100vh;
+    padding: 15px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    width: 100%;
+    max-width: 640px;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(233, 30, 99, 0.25);
+    overflow: hidden;
+    position: relative;
+  }
+  .header {
+    background: linear-gradient(135deg, #ec407a 0%, #ab47bc 100%);
+    color: white;
+    padding: 30px 20px 25px;
+    text-align: center;
+  }
+  .header h1 { font-size: 1.9em; margin-bottom: 6px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+  .header .subtitle { font-size: 1em; opacity: 0.95; }
+  .hearts { font-size: 2em; margin: 8px 0; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+  .progress-wrap {
+    padding: 15px 20px 5px;
+    background: #fff;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #ad1457;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #fce4ec;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ec407a, #ab47bc);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .screen {
+    padding: 30px 25px 35px;
+    display: none;
+    animation: fadeIn 0.5s;
+  }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Экран-заставка раунда */
+  .round-intro {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .round-intro .big-emoji {
+    font-size: 4em;
+    margin-bottom: 15px;
+    animation: bounce 1.5s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .round-intro h2 {
+    font-size: 2em;
+    color: #ad1457;
+    margin-bottom: 10px;
+  }
+  .round-intro p {
+    color: #666;
+    font-size: 1.05em;
+    margin-bottom: 25px;
+    line-height: 1.5;
+  }
+  .round-intro .round-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ffd54f, #ff7043);
+    color: white;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+  }
+
+  /* Экран вопроса */
+  .question-number {
+    color: #ad1457;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .question-text {
+    font-size: 1.25em;
+    margin-bottom: 20px;
+    color: #333;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    padding: 15px 18px;
+    background: #fce4ec;
+    border: 2px solid #f8bbd0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1em;
+    user-select: none;
+  }
+  .option:hover { border-color: #ec407a; background: #fff; transform: translateX(4px); }
+  .option.selected { background: #fff; border-color: #ec407a; box-shadow: 0 4px 12px rgba(236, 64, 122, 0.2); }
+  .option.disabled { pointer-events: none; }
+  .option.correct {
+    background: #c8e6c9 !important;
+    border-color: #43a047 !important;
+    color: #1b5e20;
+    font-weight: 600;
+  }
+  .option.incorrect {
+    background: #ffcdd2 !important;
+    border-color: #e53935 !important;
+    color: #b71c1c;
+    text-decoration: line-through;
+  }
+  .option input[type="radio"] {
+    width: 20px; height: 20px; cursor: pointer;
+    accent-color: #ec407a; flex-shrink: 0;
+  }
+  .option.correct input, .option.incorrect input { pointer-events: none; }
+
+  .emoji-puzzle {
+    font-size: 2.8em;
+    text-align: center;
+    margin: 15px 0 20px;
+    letter-spacing: 8px;
+    padding: 20px;
+    background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+    border-radius: 16px;
+  }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 15px 0;
+  }
+  .photo-card {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    background: #f5f5f5;
+  }
+  .photo-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+  }
+  .photo-card .label {
+    background: linear-gradient(135deg, #ec407a, #ab47bc);
+    color: white;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9em;
+    font-weight: 600;
+  }
+  .photo-placeholder {
+    height: 160px;
+    background: linear-gradient(135deg, #f8bbd0, #f48fb1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2em;
+  }
+
+  .feedback {
+    margin-top: 18px;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    display: none;
+    animation: fadeIn 0.3s;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct {
+    background: #c8e6c9;
+    color: #1b5e20;
+    border: 2px solid #43a047;
+  }
+  .feedback.incorrect {
+    background: #ffcdd2;
+    color: #b71c1c;
+    border: 2px solid #e53935;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 17px;
+    background: linear-gradient(135deg, #ec407a 0%, #ab47bc 100%);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(236, 64, 122, 0.4);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(236, 64, 122, 0.5); }
+  .btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
+  .btn.secondary {
+    background: linear-gradient(135deg, #ffd54f 0%, #ff7043 100%);
+    box-shadow: 0 4px 15px rgba(255, 112, 67, 0.4);
+  }
+
+  /* Финал */
+  .final-screen {
+    text-align: center;
+    padding: 40px 25px;
+  }
+  .final-screen .trophy { font-size: 4.5em; margin-bottom: 10px; animation: bounce 1.5s ease-in-out infinite; }
+  .final-screen h2 { color: #ad1457; font-size: 1.9em; margin-bottom: 10px; }
+  .final-score {
+    font-size: 3.5em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ec407a, #ab47bc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 15px 0;
+  }
+  .final-message {
+    color: #555;
+    font-size: 1.1em;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .stat-card {
+    background: #fce4ec;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .stat-card .stat-emoji { font-size: 1.8em; }
+  .stat-card .stat-value { font-size: 1.4em; font-weight: bold; color: #ad1457; margin: 4px 0; }
+  .stat-card .stat-label { font-size: 0.8em; color: #666; }
+
+  .score-board {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: white;
+    padding: 10px 18px;
+    border-radius: 30px;
+    box-shadow: 0 4px 20px rgba(233, 30, 99, 0.3);
+    font-weight: bold;
+    color: #ad1457;
+    z-index: 1000;
+    font-size: 0.9em;
+  }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 1.5em; }
+    .question-text { font-size: 1.1em; }
+    .emoji-puzzle { font-size: 2.2em; letter-spacing: 4px; }
+    .photo-card img, .photo-placeholder { height: 130px; }
+    .round-intro .big-emoji { font-size: 3em; }
+    .round-intro h2 { font-size: 1.6em; }
+    .final-score { font-size: 2.8em; }
+  }
+</style>
+</head>
+<body>
+
+<div class="score-board">💎 <span id="totalScore">0</span></div>
+
+<div class="container">
+  <div class="header">
+    <div class="hearts">💕💍💕</div>
+    <h1>Свадебный квиз</h1>
+    <div class="subtitle">Виктория & Антон</div>
+    <div class="subtitle">28 августа 2026</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="progressLabel">Начало</span>
+      <span id="progressCount">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- Стартовый экран -->
+  <div class="screen active" id="startScreen">
+    <div class="round-intro">
+      <div class="big-emoji">💍</div>
+      <h2>Добро пожаловать!</h2>
+      <p>Сегодня мы проверим, насколько хорошо вы знаете историю любви Виктории и Антона. Вас ждут 4 раунда и много интересных вопросов!</p>
+      <button class="btn" onclick="startQuiz()">Начать квиз ✨</button>
+    </div>
+  </div>
+
+  <!-- Экран-заставка раунда -->
+  <div class="screen" id="roundIntroScreen">
+    <div class="round-intro">
+      <div class="round-badge" id="roundBadge">Раунд 1</div>
+      <div class="big-emoji" id="roundEmoji">💕</div>
+      <h2 id="roundTitle">Название раунда</h2>
+      <p id="roundSubtitle">Описание раунда</p>
+      <button class="btn secondary" onclick="startRound()">Начать раунд →</button>
+    </div>
+  </div>
+
+  <!-- Экран вопроса -->
+  <div class="screen" id="questionScreen">
+    <div class="question-number" id="qNumber">Вопрос 1</div>
+    <div class="question-text" id="qText">Текст вопроса</div>
+    <div id="qMedia"></div>
+    <div class="options" id="qOptions"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <button class="btn" id="qBtn" onclick="nextStep()" disabled>Проверить ответ</button>
+  </div>
+
+  <!-- Экран завершения раунда -->
+  <div class="screen" id="roundEndScreen">
+    <div class="round-intro">
+      <div class="big-emoji" id="roundEndEmoji">🎊</div>
+      <h2 id="roundEndTitle">Раунд завершён!</h2>
+      <div class="final-score" id="roundEndScore" style="font-size:2.5em;">0</div>
+      <p id="roundEndText">Правильных ответов: 0 из 0</p>
+      <button class="btn secondary" onclick="nextRoundIntro()">Далее →</button>
+    </div>
+  </div>
+
+  <!-- Финальный экран -->
+  <div class="screen" id="finalScreen">
+    <div class="final-screen">
+      <div class="trophy">🏆</div>
+      <h2>Поздравляем!</h2>
+      <p style="color:#666;">Вы прошли все 4 раунда</p>
+      <div class="final-score" id="finalScore">0</div>
+      <p style="color:#888; margin-bottom:15px;">из <span id="finalMax">0</span> возможных очков</p>
+      <div class="stats-grid" id="statsGrid"></div>
+      <p class="final-message" id="finalMessage"></p>
+      <button class="btn" onclick="location.reload()">Пройти ещё раз 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 📝 ДАННЫЕ КВИЗА — МЕНЯЙТЕ ВОПРОСЫ И ОТВЕТЫ ЗДЕСЬ
+// ============================================================
+// correct: индекс правильного ответа (начинается с 0)
+// Для раундов 2 и 3: правильные ответы помечены как "vika" или "anton"
+
+const rounds = [
+  {
+    id: 1,
+    emoji: "💕",
+    title: "История любви",
+    subtitle: "Проверьте, насколько хорошо вы знаете историю Вики и Антона!",
+    questions: [
+      {
+        text: "Где и при каких обстоятельствах Вика и Антон впервые познакомились?",
+        options: ["На работе", "На свадьбе", "В университете", "В кафе"],
+        correct: 1
+      },
+      {
+        text: "Какого числа произошло их знакомство?",
+        options: ["14 февраля 2022", "17 сентября 2022", "1 января 2023", "8 марта 2022"],
+        correct: 1
+      },
+      {
+        text: "Кто первым написал после знакомства?",
+        options: ["Виктория 👰", "Антон 🤵", "Они написали одновременно"],
+        correct: 0
+      },
+      {
+        text: "Где прошло первое свидание Антона и Виктории?",
+        options: ["В ресторане", "В парке", "В торговом центре", "В кинотеатре"],
+        correct: 1
+      },
+      {
+        text: "Кто первым признался в любви?",
+        options: ["Виктория 👰", "Антон 🤵", "Оба одновременно 💞"],
+        correct: 1
+      },
+      {
+        text: "Какую дату Антон и Виктория считают официальным началом своих отношений?",
+        options: ["17.09.2022", "22.10.2022", "17.11.2022", "22.12.2022"],
+        correct: 3
+      },
+      {
+        text: "Куда поехали Антон и Виктория в своё первое совместное путешествие?",
+        options: ["Абхазия", "Астрахань", "Турция", "Сочи"],
+        correct: 1
+      }
+    ]
+  },
+  {
+    id: 2,
+    emoji: "🗣️",
+    title: "Кто это сказал?",
+    subtitle: "Угадайте, кто из пары чаще произносит эти фразы!",
+    questions: [
+      {
+        text: "Кто чаще говорит комплименты?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1 // 0 = Вика, 1 = Антон
+      },
+      {
+        text: "Кто чаще спрашивает «Как прошел день?»",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто чаще говорит: «Я уже выхожу» — хотя на самом деле ещё дома?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто чаще произносит: «Нам это точно нужно» перед покупкой?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто первым говорит «Давай не будем ссориться»?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1
+      },
+      {
+        text: "Кто чаще говорит: «Я хочу чего-то вкусненького»",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто чаще говорит: «Я же говорил/говорила»?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1
+      }
+    ]
+  },
+  {
+    id: 3,
+    emoji: "👰🤵",
+    title: "Я / Не я",
+    subtitle: "Бытовые вопросы — угадайте, кто это!",
+    questions: [
+      {
+        text: "Кто дольше собирается перед выходом?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто чаще опаздывает?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто первым начинает мириться после ссоры?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1
+      },
+      {
+        text: "Кто чаще моет посуду?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1
+      },
+      {
+        text: "Кто больше любит тратить деньги?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто лучше ориентируется на местности?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1
+      },
+      {
+        text: "Кто первым засыпает во время фильма?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1
+      },
+      {
+        text: "Кто больше любит фотографироваться?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто чаще предлагает куда-нибудь съездить?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 0
+      },
+      {
+        text: "Кто скорее забудет, зачем зашёл в комнату?",
+        options: ["Виктория 👰", "Антон 🤵"],
+        correct: 1
+      }
+    ]
+  },
+  {
+    id: 4,
+    emoji: "🎵📸",
+    title: "Музыка и фото",
+    subtitle: "Угадайте песни по эмодзи и разгадайте фото-загадки!",
+    questions: [
+      {
+        text: "Угадайте песню по эмодзи:",
+        emoji: "🌹🌹🌹❤️",
+        options: ["Юрий Шатунов - «Белые розы»", "Алла Пугачева - «Миллион алых роз»", "Александр Глызин - «Розовые розы»"],
+        correct: 1
+      },
+      {
+        text: "Угадайте песню по эмодзи:",
+        emoji: "🌧🙎‍♀️💕🌧",
+        options: ["Банда – «Плачут небеса»", "DJ Дождик – «Почему же?»", "Филипп Киркоров – «Полетели»"],
+        correct: 0
+      },
+      {
+        text: "Угадайте песню по эмодзи:",
+        emoji: "🧔🎁👶👶💍",
+        options: ["Ёлка - «Около тебя»", "Верка Сердючка - «Замуж за принца»","Натали - «О боже, какой мужчина»"],
+        correct: 2
+      },
+      {
+        text: "Угадайте песню по эмодзи:",
+        emoji: "1️⃣👰🏻2️⃣💑",
+        options: ["Ирина Аллегрова - «Свадебные цветы»", "Авраам Руссо - «Обручальная»", "Муслим Магомаев - «Ах, эта свадьба»"],
+        correct: 1
+      },
+      {
+        text: "Угадайте песню по эмодзи:",
+        emoji: "🗣💦🌊👎",
+        options: ["Мари Краймбрери - «Океан»", "Ханна - «Море»", "Ольга Бузова - «Водица»" ],
+        correct: 2
+      },
+      {
+        text: "На каком фото Вика и Антон ещё даже не знали, что однажды окажутся здесь — на собственной свадьбе?",
+        // 🖼️ ФОТО-ВОПРОС: замените src="..." на ссылки на ваши фото
+        // Можно использовать локальные файлы (photo1.jpg) или ссылки из интернета (https://...)
+        photos: [
+          { src: "photo1.jpg", label: "Фото А", alt: "Фото А" },
+          { src: "photo2.jpg", label: "Фото Б", alt: "Фото Б" },
+          { src: "photo3.jpg", label: "Фото В", alt: "Фото В" },
+          { src: "photo4.jpg", label: "Фото Г", alt: "Фото Г" }
+        ],
+        options: [
+          "Фото А",
+          "Фото Б",
+          "Фото В",
+          "Фото Г"
+        ],
+        correct: 0
+      }
+    ]
+  }
+];
+
+// ============================================================
+// 🎮 ЛОГИКА КВИЗА — НЕ МЕНЯЙТЕ НИЧЕГО НИЖЕ
+// ============================================================
+
+let currentRoundIndex = 0;
+let currentQuestionIndex = 0;
+let totalScore = 0;
+let roundScores = [];
+let answered = false;
+let selectedOption = null;
+
+const totalQuestions = rounds.reduce((sum, r) => sum + r.questions.length, 0);
+let questionsAnswered = 0;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateProgress() {
+  const percent = (questionsAnswered / totalQuestions) * 100;
+  document.getElementById('progressFill').style.width = percent + '%';
+  document.getElementById('progressCount').textContent = questionsAnswered + ' / ' + totalQuestions;
+  if (currentRoundIndex < rounds.length) {
+    const r = rounds[currentRoundIndex];
+    document.getElementById('progressLabel').textContent = 'Раунд ' + r.id + ': ' + r.title;
+  }
+}
+
+function startQuiz() {
+  currentRoundIndex = 0;
+  showRoundIntro();
+}
+
+function showRoundIntro() {
+  const r = rounds[currentRoundIndex];
+  document.getElementById('roundBadge').textContent = 'Раунд ' + r.id + ' из ' + rounds.length;
+  document.getElementById('roundEmoji').textContent = r.emoji;
+  document.getElementById('roundTitle').textContent = r.title;
+  document.getElementById('roundSubtitle').textContent = r.subtitle;
+  updateProgress();
+  showScreen('roundIntroScreen');
+}
+
+function startRound() {
+  currentQuestionIndex = 0;
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  selectedOption = null;
+  const r = rounds[currentRoundIndex];
+  const q = r.questions[currentQuestionIndex];
+
+  document.getElementById('qNumber').textContent = 'Раунд ' + r.id + ' · Вопрос ' + (currentQuestionIndex + 1) + ' из ' + r.questions.length;
+  document.getElementById('qText').textContent = q.text;
+
+  // Медиа (эмодзи или фото)
+  const mediaDiv = document.getElementById('qMedia');
+  mediaDiv.innerHTML = '';
+  if (q.emoji) {
+    mediaDiv.innerHTML = '<div class="emoji-puzzle">' + q.emoji + '</div>';
+  } else if (q.photos) {
+    let html = '<div class="photo-grid">';
+    q.photos.forEach(p => {
+      html += '<div class="photo-card">';
+      html += '<img src="' + p.src + '" alt="' + (p.alt || '') + '" onerror="this.outerHTML=\'<div class=\\\'photo-placeholder\\\'>📸</div>\'">';
+      html += '<div class="label">' + p.label + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    mediaDiv.innerHTML = html;
+  }
+
+  // Варианты ответов
+  const optionsDiv = document.getElementById('qOptions');
+  optionsDiv.innerHTML = '';
+  q.options.forEach((opt, idx) => {
+    const label = document.createElement('label');
+    label.className = 'option';
+    label.innerHTML = '<input type="radio" name="answer" value="' + idx + '"> ' + opt;
+    label.onclick = function(e) {
+      if (answered) return;
+      document.querySelectorAll('#qOptions .option').forEach(o => o.classList.remove('selected'));
+      label.classList.add('selected');
+      selectedOption = idx;
+      document.getElementById('qBtn').disabled = false;
+    };
+    optionsDiv.appendChild(label);
+  });
+
+  // Сброс feedback и кнопки
+  const fb = document.getElementById('qFeedback');
+  fb.className = 'feedback';
+  fb.textContent = '';
+  const btn = document.getElementById('qBtn');
+  btn.disabled = true;
+  btn.textContent = 'Проверить ответ';
+
+  showScreen('questionScreen');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() {
+  if (!answered) {
+    // Проверка ответа
+    checkAnswer();
+  } else {
+    // Переход к следующему вопросу / раунду
+    goToNext();
+  }
+}
+
+function checkAnswer() {
+  if (selectedOption === null) return;
+  answered = true;
+
+  const r = rounds[currentRoundIndex];
+  const q = r.questions[currentQuestionIndex];
+  const options = document.querySelectorAll('#qOptions .option');
+  const fb = document.getElementById('qFeedback');
+
+  options.forEach(o => o.classList.add('disabled'));
+
+  const isCorrect = selectedOption === q.correct;
+
+  if (isCorrect) {
+    options[selectedOption].classList.add('correct');
+    fb.className = 'feedback correct show';
+    fb.innerHTML = '✅ Правильно! +10 очков';
+    totalScore += 10;
+    document.getElementById('totalScore').textContent = totalScore;
+  } else {
+    options[selectedOption].classList.add('incorrect');
+    options[q.correct].classList.add('correct');
+    fb.className = 'feedback incorrect show';
+    fb.innerHTML = '❌ Неверно. Правильный ответ: <strong>' + q.options[q.correct] + '</strong>';
+  }
+
+  questionsAnswered++;
+  updateProgress();
+
+  const btn = document.getElementById('qBtn');
+  const isLastInRound = currentQuestionIndex === r.questions.length - 1;
+  const isLastRound = currentRoundIndex === rounds.length - 1;
+
+  if (isLastInRound && isLastRound) {
+    btn.textContent = 'Посмотреть результат 🏆';
+  } else if (isLastInRound) {
+    btn.textContent = 'Завершить раунд ✨';
+  } else {
+    btn.textContent = 'Далее →';
+  }
+}
+
+function goToNext() {
+  const r = rounds[currentRoundIndex];
+  const isLastInRound = currentQuestionIndex === r.questions.length - 1;
+
+  if (isLastInRound) {
+    showRoundEnd();
+  } else {
+    currentQuestionIndex++;
+    showQuestion();
+  }
+}
+
+function showRoundEnd() {
+  const r = rounds[currentRoundIndex];
+  const roundCorrect = roundScores[currentRoundIndex] || 0;
+  // Пересчитаем правильные ответы в этом раунде
+  // (используем score / 10)
+  const correctCount = Math.round(totalScore / 10 - roundScores.slice(0, currentRoundIndex).reduce((a,b) => a+b, 0) / 10);
+  const roundScore = correctCount * 10;
+  roundScores[currentRoundIndex] = roundScore;
+
+  let emoji = '🎊';
+  if (correctCount === r.questions.length) emoji = '🏆';
+  else if (correctCount >= r.questions.length * 0.7) emoji = '🌟';
+  else if (correctCount >= r.questions.length * 0.4) emoji = '💪';
+
+  document.getElementById('roundEndEmoji').textContent = emoji;
+  document.getElementById('roundEndTitle').textContent = 'Раунд «' + r.title + '» завершён!';
+  document.getElementById('roundEndScore').textContent = roundScore;
+  document.getElementById('roundEndText').textContent = 'Правильных ответов: ' + correctCount + ' из ' + r.questions.length;
+
+  showScreen('roundEndScreen');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextRoundIntro() {
+  currentRoundIndex++;
+  if (currentRoundIndex >= rounds.length) {
+    showFinal();
+  } else {
+    showRoundIntro();
+  }
+}
+
+function showFinal() {
+  document.getElementById('finalScore').textContent = totalScore;
+  document.getElementById('finalMax').textContent = totalQuestions * 10;
+
+  let message = '';
+  if (totalScore >= totalQuestions * 10 * 0.9) {
+    message = '🏆 Вы — настоящий эксперт в истории любви Вики и Антона!';
+  } else if (totalScore >= totalQuestions * 10 * 0.7) {
+    message = '🌟 Отличный результат! Вы прекрасно знаете пару!';
+  } else if (totalScore >= totalQuestions * 10 * 0.4) {
+    message = '💕 Неплохо! Но есть куда расти — узнавайте пару лучше!';
+  } else {
+    message = '😊 Главное — ваше присутствие на свадьбе!';
+  }
+  document.getElementById('finalMessage').textContent = message;
+
+  // Статистика по раундам
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = '';
+  rounds.forEach((r, i) => {
+    const score = roundScores[i] || 0;
+    const max = r.questions.length * 10;
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.innerHTML = '<div class="stat-emoji">' + r.emoji + '</div>' +
+                     '<div class="stat-value">' + score + '/' + max + '</div>' +
+                     '<div class="stat-label">' + r.title + '</div>';
+    grid.appendChild(card);
+  });
+
+  showScreen('finalScreen');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>
